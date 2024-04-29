@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    {% if not request.user.is_authenticated %}
+        <a href="register/">регистрация</a> <br>
+        <a href="login/">войти</a> <br>
+    {% else %}
+        <a href="logout/">выйти</a>
+        <a href="rooms/create/">создать комнату</a>
+    {% endif %}
+    Комнаты :
+        {% include "snippets/table.html" with rooms=rooms %}
+
+</body>
+</html>
+
+{% endblock %}

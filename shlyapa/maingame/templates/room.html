@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if not room.started %}
+
+words:
+{% include "snippets/table_rooms.html" with rooms=rooms %}
+
+создать слова:
+<a href="newword/">создать</a>
+start the game :
+<a href="card/">start</a>
+delete the room :
+<a href="delete_room/">delete</a>
+<script></script>
+
+{% else %}
+
+комната уже начала работу, <a href="/">назад</a>
+
+{% endif %}
+
+{% endblock %}

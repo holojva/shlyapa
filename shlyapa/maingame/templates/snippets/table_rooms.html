@@ -1,0 +1,47 @@
+<table>
+    <thead>
+      <tr>
+        <th scope="col">Слово</th>
+        <th scope="col">Пользователь</th>
+        <th scope="col">Удалить слово</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for word in words %}
+        <tr>
+            <th scope="row">{{word.word}}</th>
+            <td>{{word.created_by}}</td>
+            <td ><button class="del_button" pk="{{word.id}}">УДАЛИТЬ СЛОВО</button></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Пользователи в комнате:</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+      <tr class="usernames">
+          <th scope="row">{{user.user.username}}</th>
+      </tr>
+      {% endfor %}
+  </tbody>
+</table>
+
+
+<script>
+
+    let buttons = document.querySelectorAll(".del_button")
+    for (let buttons_num = 0; buttons_num<buttons.length; buttons_num++) {
+        buttons[buttons_num].addEventListener("click", (event) => {
+            let button = event.target
+            let pk = button.getAttribute("pk")
+            button.innerHTML = `<a href='/delete_word/${pk}'>ТОЧНО?</a>`
+        })
+    }
+</script>

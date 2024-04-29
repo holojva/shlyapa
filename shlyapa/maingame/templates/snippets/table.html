@@ -1,0 +1,19 @@
+
+<table>
+    <thead>
+      <tr>
+        <th scope="col">Название комнаты</th>
+        <th scope="col">Пароль комнаты</th>
+        <th scope="col">Ссылка</th>
+      </tr>
+    </thead>
+    <tbody>
+        {% for room in rooms %} 
+        <tr>
+            <th scope="row">{{room.name}}</th>
+            <td>{{room.password}}</td>
+            <td><a href="/rooms/{{room.id}}/">ОТКРЫТЬ КОМНАТУ</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

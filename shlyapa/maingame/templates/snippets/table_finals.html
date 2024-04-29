@@ -1,0 +1,18 @@
+<table>
+    <thead>
+      <tr>
+        <th scope="col">Слово</th>
+        <th scope="col">Объяснивший пользователь</th>
+        <th scope="col">Загадавший пользователь</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for word in words %}
+        <tr>
+            <th scope="row">{{word.word}}</th>
+            <td>{{word.guessed_by}}</td>
+            <td>{{word.created_by}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

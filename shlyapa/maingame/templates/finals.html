@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+The game ended. Here are the results:
+{% include "snippets/table_finals.html" with words=words %}
+{% for i in words %}
+
+
+{% endfor %}
+<a href="/rooms/{{pk}}">вернуться</a>
+
+{% endblock %}
