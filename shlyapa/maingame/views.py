@@ -11,7 +11,14 @@ from django.contrib.auth.decorators import login_required
 from datetime import datetime
 #Create your views here.
 import random
-
+def admin_decorator(view_function) :
+    def wrapper(*args, **kwargs) :
+        model_entity=Rooms.objects.get(id=kwargs["room_index"])
+        if model_entity.admin_user == args[0].user :
+            print("I AM THE ADMIN")
+        return view_function(*args, **kwargs)
+    return wrapper
+    
 @login_required(login_url='/login/')
 def index(request) :
     Rooms.objects.filter()
@@ -32,76 +39,67 @@ def room(request, pk) :
         model_entity.end_room()
         model_entity.save()
 
-    if not model_entity.started :
-        upd_user.room = model_entity
-        upd_user.save()
-        list_of_words = [i for i in Words.objects.filter(room=model_entity)]
-        print(list_of_words)
-        shuffle(list_of_words)
-        print(list_of_words)
-
-        if request.user == model_entity.admin_user :
-            for i in list_of_words :
-                i.used=False
-                i.save()
-                print(i.used, i.word)
-
-        return render(request, "room.html", context={
-            "words":Words.objects.filter(room=model_entity), 
-            "users":UpdatedUserModel.objects.filter(room=model_entity)})
-    
-    else:
-        return render(request, "waiting_screen.html")
-    
-@login_required(login_url='/login/')
-def game(request, pk, pk2) :
-    print(request.user)
-    model_entity = Rooms.objects.get(id=pk)
-    print(model_entity.users)
+    upd_user.room = model_entity
+    upd_user.save()
+    list_of_words = [i for i in Words.objects.filter(room=model_entity)]
+    print(list_of_words)
+    shuffle(list_of_words)
+    print(list_of_words)
 
     if request.user == model_entity.admin_user :
+        for i in list_of_words :
+            i.used=False
+            i.save()
+            print(i.used, i.word)
+
+    return render(request, "room.html", context={
+        "words":Words.objects.filter(room=model_entity), 
+        "users":UpdatedUserModel.objects.filter(room=model_entity)})
+@admin_decorator
+@login_required(login_url='/login/')
+def game(request, room_index, word_index) :
+    
+    print(request.user)
+    model_entity = Rooms.objects.get(id=room_index)
+    model_entity.get_player_index
+    
+    if request.user == model_entity.admin_user and not model_entity.started :
         model_entity.prepare_room()
-        
-
+    model_entity.update_player()
+    user_list = model_entity.get_sequence()
+    start_time = model_entity.get_time_from_start()
     if model_entity.started :
-        list_of_words = [i for i in Words.objects.filter(room=model_entity, used=False)]
+        list_of_words = [word for word in Words.objects.filter(room=model_entity, used=False, wasted=False)]
         shuffle(list_of_words)
-
+        print(model_entity.get_time_from_start())
         if request.method == "POST":
-            print(request.POST)
             is_completed = request.POST["action"]
 
             if is_completed :
-                word_model = Words.objects.get(id=pk2)
-                word_model.guessed_word()
-
+                word_model = Words.objects.get(id=word_index)
+                
                 if is_completed == "Объяснил" :
-                    word_model.guessed_by = request.user
-
+                    word_model.guessed_by = request.user 
+                    word_model.guessed_word()
                 else :
                     word_model.guessed_by = None
-
+                    word_model.wasted = True
                 word_model.save()
-                list_of_words = [i for i in Words.objects.filter(room=model_entity, used=False)]
-                shuffle(list_of_words)
-                print(list_of_words)
+                list_of_words_with_wasted = [word for word in Words.objects.filter(room=model_entity, used=False)]
 
                 if len(list(list_of_words)) < 1 :
-                    return redirect("/rooms/"+str(pk)+"/finals/")
+                    return redirect("/rooms/"+str(room_index)+"/finals/")
                 
                 if request.user == model_entity.user_playing :
-                    return redirect("/rooms/"+str(pk)+"/card/")
-                
-        if model_entity.started == False :
-            redirect("/rooms/"+str(pk))
+                    return redirect("/rooms/"+str(room_index)+"/card/")
 
         model_entity.save()
-
-        return render(request, "cards.html", context={"word":Words.objects.get(id=pk2).word, "user_playing":Rooms.objects.get(id=pk).user_playing})
-
+        return render(request, "cards.html", context={"word":Words.objects.get(id=word_index).word, "room_object":Rooms.objects.get(id=room_index),"time_from_start":model_entity.get_seconds_from_start, "player_index":model_entity.get_player_index, "time_left":model_entity.get_time_left, "room_index":room_index})
+    else :
+        return redirect("/rooms/"+str(room_index))
 
 def card_teleport(request, pk) :
-    list_of_words = [i for i in Words.objects.filter(room=Rooms.objects.get(id=pk), used=False)]
+    list_of_words = [i for i in Words.objects.filter(room=Rooms.objects.get(id=pk), used=False, wasted=False)]
     shuffle(list_of_words)
 
     if len(list(list_of_words)) < 1 :
@@ -175,7 +173,7 @@ def room_form(request) :
             # redirect to a new URL:
             # task = .apply_async(countdown=2)
             # print(task.get())
-            room = Rooms.objects.create(name=request.POST["name"],password="password", admin_user=request.user, user_playing=request.user)
+            room = Rooms.objects.create(name=request.POST["name"],password="password", admin_user=request.user, user_playing=request.user, minutes_for_player=request.POST["time"])
             print(room.id)
         return redirect("/rooms/"+str(room.id))
 

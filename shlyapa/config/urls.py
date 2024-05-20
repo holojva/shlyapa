@@ -38,7 +38,7 @@ urlpatterns = [
     path("", index),
     path("rooms/<int:pk>/", room, name="room"),
     path("rooms/<int:pk>/edit/", room_edit_form, name="room_edit"),
-    path("rooms/<int:pk>/card/<int:pk2>/", game, name="card"),
+    path("rooms/<int:room_index>/card/<int:word_index>/", game, name="card"),
     path("rooms/<int:pk>/card/", card_teleport, name="card_tp"),
     path("rooms/<int:pk>/finals/", finals, name="finals"),
     path("rooms/<int:pk>/newword/", word_form, name="newword"),
@@ -49,5 +49,5 @@ urlpatterns = [
     path("rooms/<int:pk>/delete_room/", delete_room, name="delete_room"),
     path("rooms/<int:pk>/delete_permanently/", delete_room_permanently, name="permanently_delete_room"),
     path("rooms/create/", room_form, name="newroom"),
-    path("delete_word/<int:pk>", delete_word_permanently)
+    path("delete_word/<int:pk>/", delete_word_permanently)
 ]

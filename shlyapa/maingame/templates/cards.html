@@ -1,8 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
+Осталось времени :
+<p id="time_left">{{time_left}}</p>
+{{room_object.user_playing}},
+{{request.user}}
+{% if room_object.user_playing == request.user %}
 
-{% if user_playing == request.user %}
 word: {{word}}
 <form action="" method="post">
     {% csrf_token %}
@@ -12,5 +16,20 @@ word: {{word}}
 {% else %}
 Еще не ваша очередь, подождите когда будет ваша
 {% endif %}
+<script>
 
+
+    function countDown(timer_object) {
+        timer_content = timer_object.textContent;
+        timer_num = Number(timer_content);
+        timer_num--;
+        if (timer_num<0) {
+            location.href = '/rooms/{{room_index}}/card';
+        }
+        timer_object.textContent = timer_num.toString();
+        
+    }
+    let timer = document.querySelector("#time_left");
+    let interval = setInterval(countDown, 1000, timer);
+</script>
 {% endblock %}

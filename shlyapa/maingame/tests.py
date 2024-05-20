@@ -5,7 +5,21 @@ from django.contrib.auth.models import User
 from .models import Rooms
 # Create your tests here.
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+
 from .views import room
+
+class ProgramTest(StaticLiveServerTestCase) :
+    @classmethod
+    def setUpClass(cls) :
+        super().setUpClass()
+        cls.selenium=webdriver.Firefox()
+    def tearDownClass(cls) :
+        cls.selenium.quit()
+        super().tearDownClass()
+
 class RoomTestCase(TestCase) :
 
     def setUp(self) :
@@ -18,7 +32,7 @@ class RoomTestCase(TestCase) :
     def test_create(self) :
         c = Client()
         logged_in = c.login(username="testuser", password="12345")
-        response = c.post(reverse("newroom"), {"name": "test"})
+        response = c.post(reverse("newroom"), {"name": "test", "time":"1:00"})
         test_room = Rooms.objects.get(name="test")
         self.assertEqual(test_room.name, "test")
         self.assertEqual(test_room.password, "password")
