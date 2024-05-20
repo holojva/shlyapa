@@ -3,7 +3,7 @@
 {% block content %}
 
     Are you sure you want to delete the room: <a href="/rooms/{{pk}}/delete_permanently/"><button>Yes</button></a> 
-    <a href="/rooms/{{pk}}/"><button>No</button></a> 
+    <a href="{% url 'room' pk %}"><button>No</button></a> 
 </body>
 </html>
 

@@ -35,7 +35,7 @@ from maingame.views import (
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("", index),
+    path("", index, name="index"),
     path("rooms/<int:pk>/", room, name="room"),
     path("rooms/<int:pk>/edit/", room_edit_form, name="room_edit"),
     path("rooms/<int:room_index>/card/<int:word_index>/", game, name="card"),

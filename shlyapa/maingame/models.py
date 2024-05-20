@@ -106,9 +106,12 @@ class Words(models.Model) :
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name="created_by")
     used = models.BooleanField(default=False)
     wasted = models.BooleanField(default=False)
-    def guessed_word(self) :
+    def guessed_word(self, user) :
         self.used = True
-        
+        self.guessed_by = user
+    def wasted_word(self) :
+        self.wasted = True
+        self.guessed_by = None
 
 class UpdatedUserModel(models.Model) :
     user = models.OneToOneField(User, on_delete=models.CASCADE)

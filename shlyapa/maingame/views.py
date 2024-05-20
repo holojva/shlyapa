@@ -5,11 +5,10 @@ from .tasks import todo_notification
 from .forms import LoginForm, RegisterForm, RoomForm, WordForm
 from django.contrib.auth.models import User
 from django.contrib.auth import logout as logout_function, login as login_function, authenticate
-# from .tasks import add
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from datetime import datetime
-#Create your views here.
 import random
 def admin_decorator(view_function) :
     def wrapper(*args, **kwargs) :
@@ -26,14 +25,12 @@ def index(request) :
     upd_user.room = None
     upd_user.save()
     print(request.user)
-    # add.delay(2, 2)
     return render(request, "index.html", context={"rooms":Rooms.objects.filter(started=False)})
 
 @login_required(login_url='/login/')
 def room(request, pk) :
     model_entity = Rooms.objects.get(id=pk)
     upd_user = UpdatedUserModel.objects.get(user=request.user)
-    #Rooms.users.add(request.user)
 
     if request.user == model_entity.admin_user :
         model_entity.end_room()
@@ -66,8 +63,6 @@ def game(request, room_index, word_index) :
     if request.user == model_entity.admin_user and not model_entity.started :
         model_entity.prepare_room()
     model_entity.update_player()
-    user_list = model_entity.get_sequence()
-    start_time = model_entity.get_time_from_start()
     if model_entity.started :
         list_of_words = [word for word in Words.objects.filter(room=model_entity, used=False, wasted=False)]
         shuffle(list_of_words)
@@ -78,23 +73,27 @@ def game(request, room_index, word_index) :
             if is_completed :
                 word_model = Words.objects.get(id=word_index)
                 
-                if is_completed == "Объяснил" :
-                    word_model.guessed_by = request.user 
-                    word_model.guessed_word()
+                if is_completed == "Объяснил" : 
+                    word_model.guessed_word(user=request.user)
                 else :
-                    word_model.guessed_by = None
-                    word_model.wasted = True
+                    word_model.wasted_word()
                 word_model.save()
-                list_of_words_with_wasted = [word for word in Words.objects.filter(room=model_entity, used=False)]
 
                 if len(list(list_of_words)) < 1 :
-                    return redirect("/rooms/"+str(room_index)+"/finals/")
+                    return redirect(reverse("finals", args=[room_index]))#redirect("/rooms/"+str(room_index)+"/finals/")
                 
                 if request.user == model_entity.user_playing :
-                    return redirect("/rooms/"+str(room_index)+"/card/")
+                    return redirect(reverse("card_tp", args=[room_index]))
 
         model_entity.save()
-        return render(request, "cards.html", context={"word":Words.objects.get(id=word_index).word, "room_object":Rooms.objects.get(id=room_index),"time_from_start":model_entity.get_seconds_from_start, "player_index":model_entity.get_player_index, "time_left":model_entity.get_time_left, "room_index":room_index})
+        return render(request, "cards.html", context={
+            "word":Words.objects.get(id=word_index).word, 
+            "room_object":Rooms.objects.get(id=room_index),
+            "time_from_start":model_entity.get_seconds_from_start, 
+            "player_index":model_entity.get_player_index, 
+            "time_left":model_entity.get_time_left, 
+            "room_index":room_index
+        })
     else :
         return redirect("/rooms/"+str(room_index))
 
@@ -103,9 +102,9 @@ def card_teleport(request, pk) :
     shuffle(list_of_words)
 
     if len(list(list_of_words)) < 1 :
-        return redirect("/rooms/"+str(pk)+"/finals/")
+        return redirect(reverse("finals", args=[pk]))
     
-    return redirect("/rooms/"+str(pk)+"/card/"+str(list_of_words[0].id))
+    return redirect(reverse("card", args=[pk, list_of_words[0].id])) #redirect("/rooms/"+str(pk)+"/card/"+str(list_of_words[0].id))
 
 
 def finals(request, pk) :
@@ -115,13 +114,8 @@ def finals(request, pk) :
 
 def login(request) :
     if request.method == "POST":
-    # create a form instance and populate it with data from the request:
         form = LoginForm(request.POST)
-        # check whether it's valid:
         if form.is_valid():
-            # process the data in form.cleaned_data as required
-            # ...
-            # redirect to a new URL:
             username = request.POST["username"]
             password = request.POST["password"]
 
@@ -130,7 +124,6 @@ def login(request) :
                 login_function(request,user)
             return redirect("/")
 
-    # if a GET (or any other method) we'll create a blank form
     else:
         form = LoginForm()
 
@@ -139,18 +132,14 @@ def login(request) :
 
 def register(request) :
     if request.method == "POST":
-    # create a form instance and populate it with data from the request:
         form = RegisterForm(request.POST)
-        # check whether it's valid:
         if form.is_valid():
-            # process the data in form.cleaned_data as required
-            # ...
-            # redirect to a new URL:
-            user = User.objects.create_user(request.POST["username"], "test@test.com", request.POST["password"])
-            updated_user = UpdatedUserModel.objects.create(user=user, room=None)
-            return redirect("/")
-
-    # if a GET (or any other method) we'll create a blank form
+            user = User.objects.create_user(
+                username=request.POST["username"], 
+                password=request.POST["password"]
+            )
+            UpdatedUserModel.objects.create(user=user)
+            return redirect(reverse("index"))
     else:
         form = RegisterForm()
     return render(request, "register.html", context={"form":RegisterForm})
@@ -158,26 +147,22 @@ def register(request) :
 
 def logout(request) :
     logout_function(request)
-    return redirect("/")
+    return redirect(reverse("index"))
 
 
 @login_required(login_url='/login/')
 def room_form(request) :
     if request.method == "POST":
-    # create a form instance and populate it with data from the request:
         form = RoomForm(request.POST)
-        # check whether it's valid:
         if form.is_valid():
-            # process the data in form.cleaned_data as required
-            # ...
-            # redirect to a new URL:
-            # task = .apply_async(countdown=2)
-            # print(task.get())
-            room = Rooms.objects.create(name=request.POST["name"],password="password", admin_user=request.user, user_playing=request.user, minutes_for_player=request.POST["time"])
+            room = Rooms.objects.create(
+                name=request.POST["name"],
+                password="password", admin_user=request.user, 
+                user_playing=request.user, 
+                minutes_for_player=request.POST["time"]
+            )
             print(room.id)
-        return redirect("/rooms/"+str(room.id))
-
-    # if a GET (or any other method) we'll create a blank form
+        return redirect(reverse("room", args=[room.id]))
     else:
         form = RoomForm()
     return render(request, "login.html", context={"form":RoomForm})
@@ -195,7 +180,7 @@ def room_edit_form(request, pk) :
             room.save()
             print(room.id)
 
-        return redirect("/rooms/"+str(room.id))
+        return redirect(reverse("room", args=[room.id]))
     
     else:
         form = RoomForm({"name":room.name})
@@ -212,7 +197,11 @@ def word_form(request, pk) :
             # process the data in form.cleaned_data as required
             # ...
             # redirect to a new URL:
-            room = Words.objects.create(word=request.POST["word"], room=Rooms.objects.get(id=pk), created_by=request.user)
+            room = Words.objects.create(
+                word=request.POST["word"], 
+                room=Rooms.objects.get(id=pk), 
+                created_by=request.user
+                )
             print(room.id)
         return redirect("/rooms/"+str(pk))
 
@@ -243,7 +232,7 @@ def delete_word_permanently(request, pk) :
     room_pk = model_entity.room.id
     if model_entity.created_by == request.user or model_entity.created_by == None :
         model_entity.delete()
-        return redirect(f'/rooms/{room_pk}')
+        return redirect(reverse("room", args=[room_pk]))#redirect(f'/rooms/{room_pk}')
     else :
         return redirect("/")
 def test(text) :
