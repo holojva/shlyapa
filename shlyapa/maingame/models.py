@@ -112,7 +112,10 @@ class Words(models.Model) :
     def wasted_word(self) :
         self.wasted = True
         self.guessed_by = None
-
+    def restart(self) :
+        self.used = False
+        self.wasted = False
+        self.guessed_by = None
 class UpdatedUserModel(models.Model) :
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     room = models.ForeignKey(Rooms, null=True, on_delete=models.CASCADE)
